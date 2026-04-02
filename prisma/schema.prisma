@@ -1,0 +1,46 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Event {
+  id             String    @id @default(uuid())
+  slug           String    @unique
+  name           String
+  bannerUrl      String?
+  primaryColor   String    @default("#171717")
+  secondaryColor String    @default("#d4af37")
+  createdAt      DateTime  @default(now())
+  media          Media[]
+}
+
+model Media {
+  id           String        @id @default(uuid())
+  eventId      String
+  event        Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  fileUrl      String
+  thumbnailUrl String?
+  mediaType    String        @default("IMAGE") // IMAGE, VIDEO
+  uploaderName String?
+  status       String        @default("ACTIVE") // ACTIVE, DELETED
+  createdAt    DateTime      @default(now())
+  interactions Interaction[]
+}
+
+model Interaction {
+  id         String   @id @default(uuid())
+  mediaId    String
+  media      Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  type       String   @default("COMMENT") // LIKE, COMMENT
+  content    String?
+  authorName String?
+  ipAddress  String?
+  userAgent  String?
+  status     String   @default("ACTIVE") // ACTIVE, DELETED
+  createdAt  DateTime @default(now())
+}
