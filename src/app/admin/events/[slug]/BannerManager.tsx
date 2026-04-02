@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { ImagePlus, Loader2, Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import imageCompression from 'browser-image-compression';
 
 export default function BannerManager({ eventId, currentBannerUrl }: { eventId: string, currentBannerUrl: string | null }) {
   const router = useRouter();
@@ -15,9 +16,17 @@ export default function BannerManager({ eventId, currentBannerUrl }: { eventId: 
 
     setIsUploading(true);
     try {
+      // Compress to avoid Vercel 4.5MB limit
+      let finalFile: File = file;
+      if (file.type.startsWith('image/')) {
+        const options = { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true };
+        const compressedBlob = await imageCompression(file, options);
+        finalFile = new File([compressedBlob], file.name, { type: file.type });
+      }
+
       // 1. Upload the image file
       const bd = new FormData();
-      bd.append('file', file);
+      bd.append('file', finalFile);
       bd.append('isBanner', 'true');
 
       const uploadRes = await fetch('/api/upload', {
