@@ -1,7 +1,9 @@
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import { format } from 'date-fns';
-import { Trash2, Link as LinkIcon, QrCode } from 'lucide-react';
+import { Link as LinkIcon, QrCode } from 'lucide-react';
+import { revalidatePath } from 'next/cache';
+import DeleteButton from './DeleteButton';
 import Link from 'next/link';
 import { headers } from 'next/headers';
 import QRCodeDisplay from './QRCodeDisplay';
@@ -84,14 +86,14 @@ export default async function EventModerationPage({ params }: { params: Promise<
                   )}
                   {/* Delete button: always visible on mobile, hover on desktop */}
                   <div className="absolute top-3 right-3 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
-                    <form action={async () => {
-                      'use server';
-                      await prisma.media.update({ where: { id: item.id }, data: { status: 'DELETED' }});
-                    }}>
-                      <button type="submit" className="bg-red-500/90 backdrop-blur-md text-white p-2.5 rounded-full hover:scale-110 hover:bg-red-600 active:scale-95 transition-all shadow-[0_4px_20px_rgba(239,68,68,0.5)] border border-red-400/30" title="Eliminar Foto">
-                        <Trash2 size={18} />
-                      </button>
-                    </form>
+                    <DeleteButton 
+                      message="¿Seguro que deseas eliminar esta fotografía de la galería?"
+                      actionFn={async () => {
+                        'use server';
+                        await prisma.media.update({ where: { id: item.id }, data: { status: 'DELETED' }});
+                        revalidatePath(`/admin/events/${slug}`);
+                      }} 
+                    />
                   </div>
                 </div>
                 
@@ -108,14 +110,15 @@ export default async function EventModerationPage({ params }: { params: Promise<
                           <span className="font-extrabold text-neutral-800 break-words">{comment.authorName}: </span>
                           <span className="text-neutral-600 break-words">{comment.content}</span>
                         </div>
-                        <form action={async () => {
-                          'use server';
-                          await prisma.interaction.update({ where: { id: comment.id }, data: { status: 'DELETED' }});
-                        }}>
-                          <button type="submit" className="text-neutral-400 hover:bg-red-100 hover:text-red-500 p-1.5 rounded-md transition-colors flex-shrink-0">
-                            <Trash2 size={14} />
-                          </button>
-                        </form>
+                        <DeleteButton 
+                          isComment
+                          message="¿Deseas eliminar este comentario para todos?"
+                          actionFn={async () => {
+                            'use server';
+                            await prisma.interaction.update({ where: { id: comment.id }, data: { status: 'DELETED' }});
+                            revalidatePath(`/admin/events/${slug}`);
+                          }} 
+                        />
                       </div>
                     ))}
                     {item.interactions.filter((i: any) => i.type === 'COMMENT').length === 0 && (
