@@ -82,13 +82,14 @@ export default async function EventModerationPage({ params }: { params: Promise<
                   ) : (
                     <img src={item.fileUrl} alt="Media" className="w-full h-full object-cover" loading="lazy" />
                   )}
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-sm">
+                  {/* Delete button: always visible on mobile, hover on desktop */}
+                  <div className="absolute top-3 right-3 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
                     <form action={async () => {
                       'use server';
                       await prisma.media.update({ where: { id: item.id }, data: { status: 'DELETED' }});
                     }}>
-                      <button type="submit" className="bg-red-500 text-white p-4 rounded-full hover:scale-110 hover:bg-red-600 active:scale-95 transition-all shadow-lg" title="Eliminar Foto">
-                        <Trash2 size={24} />
+                      <button type="submit" className="bg-red-500/90 backdrop-blur-md text-white p-2.5 rounded-full hover:scale-110 hover:bg-red-600 active:scale-95 transition-all shadow-[0_4px_20px_rgba(239,68,68,0.5)] border border-red-400/30" title="Eliminar Foto">
+                        <Trash2 size={18} />
                       </button>
                     </form>
                   </div>
