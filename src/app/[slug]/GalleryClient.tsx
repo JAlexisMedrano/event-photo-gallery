@@ -17,6 +17,8 @@ export default function GalleryClient({ eventId, accentColor }: { eventId: strin
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedPreview, setSelectedPreview] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -42,7 +44,7 @@ export default function GalleryClient({ eventId, accentColor }: { eventId: strin
     }
   };
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -50,6 +52,14 @@ export default function GalleryClient({ eventId, accentColor }: { eventId: strin
       setShowNameModal(true);
       return;
     }
+
+    setSelectedFile(file);
+    setSelectedPreview(URL.createObjectURL(file));
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) return;
+    const file = selectedFile;
 
     setIsUploading(true);
     setUploadProgress(10); // Start progress
@@ -87,6 +97,9 @@ export default function GalleryClient({ eventId, accentColor }: { eventId: strin
       setTimeout(() => {
         setIsUploading(false);
         setUploadProgress(0);
+        setSelectedFile(null);
+        setSelectedPreview(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
       }, 1000);
     }
   };
@@ -127,6 +140,48 @@ export default function GalleryClient({ eventId, accentColor }: { eventId: strin
 
   return (
     <div className="w-full relative">
+      {/* Upload Preview Modal */}
+      {selectedFile && selectedPreview && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[120] flex flex-col items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-neutral-900 rounded-3xl overflow-hidden shadow-2xl border border-neutral-800 flex flex-col max-h-[90vh]">
+            <div className="p-4 border-b border-neutral-800 flex justify-between items-center">
+              <h3 className="text-xl font-bold text-white">Confirmar Foto</h3>
+              <button 
+                onClick={() => { setSelectedFile(null); setSelectedPreview(null); if(fileInputRef.current) fileInputRef.current.value = ''; }}
+                className="text-neutral-400 hover:text-white transition-colors"
+                title="Cancelar"
+                disabled={isUploading}
+              >
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-hidden bg-black/50 relative flex items-center justify-center p-2 min-h-[300px]">
+              {selectedFile.type.startsWith('video/') ? (
+                <video src={selectedPreview} controls autoPlay loop className="max-w-full max-h-[55vh] object-contain rounded-xl shadow-lg" />
+              ) : (
+                <img src={selectedPreview} alt="Preview" className="max-w-full max-h-[55vh] object-contain rounded-xl shadow-lg" />
+              )}
+            </div>
+
+            <div className="p-6 bg-neutral-900 border-t border-neutral-800">
+              <button 
+                onClick={handleUpload}
+                disabled={isUploading}
+                style={!isUploading ? { backgroundColor: accentColor } : { backgroundColor: '#333', color: '#aaaaaa' }}
+                className="w-full text-black font-extrabold text-xl py-4 rounded-xl flex items-center justify-center gap-3 hover:opacity-90 active:scale-95 transition-all shadow-[0_0_20px_rgba(255,255,255,0.05)]"
+              >
+                {isUploading ? (
+                   <>Subiendo... {uploadProgress}%</>
+                ) : (
+                   <><Upload size={24} className="stroke-[2.5]" /> Subir a la Galería</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Name Modal */}
       {showNameModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
@@ -175,7 +230,7 @@ export default function GalleryClient({ eventId, accentColor }: { eventId: strin
           ref={fileInputRef} 
           className="hidden" 
           accept="image/*,video/*" 
-          onChange={handleUpload}
+          onChange={handleFileSelect}
         />
       </div>
 
