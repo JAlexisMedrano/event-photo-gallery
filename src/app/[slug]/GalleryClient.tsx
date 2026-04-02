@@ -250,15 +250,19 @@ export default function GalleryClient({ eventId, accentColor }: { eventId: strin
         </div>
       )}
 
+      {/* Gallery Empty States */}
+      {!media && <div className="text-center w-full py-20 text-neutral-400">Loading moments...</div>}
+      {media?.length === 0 && (
+        <div className="text-center w-full py-20 px-6 text-lg md:text-xl font-light text-neutral-400 opacity-80">
+          Nadie ha subido fotos aún. <br className="md:hidden" />
+          <span className="font-semibold text-neutral-300">¡Sé el primero!</span>
+        </div>
+      )}
+
       {/* Gallery Grid */}
-      <div className="columns-2 md:columns-3 lg:columns-4 gap-3 md:gap-6 space-y-3 md:space-y-6">
-        {!media && <div className="text-center w-full py-20 text-neutral-400 col-span-full">Loading moments...</div>}
-        {media?.length === 0 && (
-          <div className="text-center w-full py-20 text-xl font-light text-neutral-400 opacity-80 col-span-full">
-            Nadie ha subido fotos aún. ¡Sé el primero!
-          </div>
-        )}
-        {media?.map((item: any, index: number) => {
+      {media && media.length > 0 && (
+        <div className="columns-2 md:columns-3 lg:columns-4 gap-3 md:gap-6 space-y-3 md:space-y-6">
+          {media.map((item: any, index: number) => {
           const likesCount = item.interactions.filter((i: any) => i.type === 'LIKE').length;
           const comments = item.interactions.filter((i: any) => i.type === 'COMMENT');
 
@@ -330,6 +334,7 @@ export default function GalleryClient({ eventId, accentColor }: { eventId: strin
           );
         })}
       </div>
+      )}
     </div>
   );
 }
